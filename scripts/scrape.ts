@@ -3,7 +3,7 @@ import * as cheerio from "cheerio";
 import { encode } from "gpt-3-encoder";
 import { setTimeout } from "timers/promises";
 import { Database } from "sqlite3";
-import util from "./util";
+import sqlite from "./sqlite";
 
 type Content = {
   path: string;
@@ -16,26 +16,70 @@ type Content = {
 const BASE_URL =
   "https://github.com/matthiasn/talk-transcripts/blob/master/Hickey_Rich";
 const CHUNK_SIZE = 200;
-const TALK_PATHS = ["/SimpleMadeEasy.md", "/MaybeNot.md"];
+const TALK_PATHS = [
+  "/ClojureConcurrency.md",
+  "/ClojureForJavaProgrammers.md",
+  "/ClojureIntroForLispProgrammers.md",
+  "/AreWeThereYet.md",
+  "/PersistentDataStructure.md",
+  "/HammockDrivenDev.md",
+  "/RichHickeyQandA.md",
+  "/SimpleMadeEasy.md",
+  "/SimplicityMatters.md",
+  "/ValueOfValuesLong.md",
+  "/WritingDatomicInClojure.md",
+  "/Reducers.md",
+  "/ValueOfValues.md",
+  "/DeconstructingTheDatabase.md",
+  "/LanguageSystem.md",
+  "/FunctionalDatabase.md",
+  "/CoreAsync.md",
+  "/DesignCompositionPerformance.md",
+  "/ImplementationDetails.md",
+  "/Transducers.md",
+  "/InsideTransducers.md",
+  "/ClojureMadeSimple.md",
+  "/ClojureSpec.md",
+  "/Spec_ulation.md",
+  "/EffectivePrograms.md",
+  "/DatomicIons.md",
+  "/ProblemSolving.md",
+  "/MaybeNot.md",
+];
 
-const initializeDb = async () => {
-  const db = util.sqlite.client();
-  await util.sqlite.exec(
+const setupDb = async () => {
+  const db = sqlite.init();
+  await sqlite.exec(
     db,
-    `
-    CREATE TABLE IF NOT EXISTS chunks (
+    `CREATE TABLE IF NOT EXISTS talks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       path TEXT NOT NULL,
       title TEXT NOT NULL,
       conference TEXT NOT NULL,
-      video_url TEXT NOT NULL,
+      video_url TEXT
+    )`
+  );
+  await sqlite.exec(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS chunks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      talk_id INTEGER NOT NULL,
       chunk TEXT NOT NULL,
       chunk_length INTEGER NOT NULL,
-      tokens INTEGER NOT NULL,
-      embedding TEXT
-    );`
+      tokens INTEGER NOT NULL
+    )`
   );
-  await util.sqlite.exec(db, `DELETE FROM chunks;`);
+  await sqlite.exec(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS embeddings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chunk_id INTEGER NOT NULL,
+      embedding TEXT NOT NULL
+    )`
+  );
+  await sqlite.exec(db, `DELETE FROM chunks;`);
   return db;
 };
 
@@ -61,6 +105,21 @@ const getContents = async (path: string) => {
 };
 
 const save = async (db: Database, content: Content) => {
+  await sqlite.exec(
+    db,
+    `
+    INSERT INTO talks (
+      path
+      , title
+      , conference
+      , video_url
+    ) VALUES (
+      '${BASE_URL}${content.path}'
+      , '${content.title}'
+      , '${content.conference}'
+      , '${content.videoUrl}'
+    )`
+  );
   const chunks = content.texts.flatMap((text) => {
     if (encode(text).length > CHUNK_SIZE) {
       return text.split(".").flatMap((sentence) => {
@@ -72,22 +131,23 @@ const save = async (db: Database, content: Content) => {
     }
   });
   for (const chunk of chunks) {
-    await util.sqlite.exec(
+    await sqlite.exec(
       db,
       `
       INSERT INTO chunks (
-        path,
-        title,
-        conference,
-        video_url,
-        chunk,
-        chunk_length,
-        tokens
-      ) VALUES ('${BASE_URL}${content.path}', '${content.title}', '${
-        content.conference
-      }', '${content.videoUrl}', '${chunk}', ${chunk.length}, ${
-        encode(chunk).length
-      })
+        talk_id
+        , chunk
+        , chunk_length
+        , tokens
+      ) SELECT
+        id
+        , '${chunk}'
+        , ${chunk.length}
+        , ${encode(chunk).length}
+      FROM
+        talks
+      WHERE
+        path = '${BASE_URL}${content.path}'
     `
     );
   }
@@ -95,11 +155,13 @@ const save = async (db: Database, content: Content) => {
 
 if (require.main === module) {
   (async () => {
-    const db = await initializeDb();
+    const db = await setupDb();
     for (const talkPath of TALK_PATHS) {
       const content = await getContents(talkPath);
+      console.log(content);
       await save(db, content);
-      await setTimeout(1000);
+      await setTimeout(2000);
     }
+    db.close();
   })();
 }

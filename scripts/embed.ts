@@ -1,26 +1,39 @@
 import { setTimeout } from "timers/promises";
-import util from "./util";
+import openai from "./openai";
+import sqlite from "./sqlite";
 
 if (require.main === module) {
   (async () => {
-    const openai = util.openai.client();
-    const db = util.sqlite.client();
-    const rows = await util.sqlite.list(
+    const openaiClient = openai.init();
+    const db = sqlite.init();
+    const rows = await sqlite.list(
       db,
-      "SELECT id, chunk FROM chunks WHERE embedding IS NULL"
+      `
+        SELECT
+          c.id
+          , c.chunk
+        FROM
+          chunks AS c
+          LEFT JOIN embeddings AS e
+            ON c.id = e.chunk_id
+        WHERE
+          e.id IS NULL
+      `
     );
     for (const row of rows) {
-      const embedding = await util.openai.fetchEmbedding(openai, row.chunk);
-      await util.sqlite.exec(
+      const embedding = await openai.fetchEmbedding(openaiClient, row.chunk);
+      await sqlite.exec(
         db,
-        `UPDATE chunks SET embedding = '${embedding
-          .map((e) => String(e))
-          .join(",")}' WHERE id = ${row.id}`
+        `
+        INSERT INTO embeddings
+          (chunk_id, embedding)
+        VALUES
+          (${row.id}, '${String(embedding)}')
+        `
       );
       console.log(`embeded: id=${row.id}`);
       await setTimeout(2000);
     }
-
     db.close();
   })();
 }
