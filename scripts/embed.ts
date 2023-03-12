@@ -20,7 +20,9 @@ if (require.main === module) {
           e.id IS NULL
       `
     );
+    console.log(`rows.length: ${rows.length}`);
     for (const row of rows) {
+      console.log(`embed: id=${row.id}`);
       const embedding = await openai.fetchEmbedding(openaiClient, row.chunk);
       await sqlite.exec(
         db,
@@ -31,7 +33,6 @@ if (require.main === module) {
           (${row.id}, '${String(embedding)}')
         `
       );
-      console.log(`embeded: id=${row.id}`);
       await setTimeout(2000);
     }
     db.close();

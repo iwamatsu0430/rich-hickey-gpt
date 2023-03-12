@@ -41,7 +41,7 @@ const answer = async (query: string, matchesCount: number = 5) => {
     });
   return {
     searchResult,
-    messages: answerResult.choices.map((c) => c.message.content),
+    messages: answerResult.choices.map((c: any) => c.message.content),
   };
 };
 
@@ -53,15 +53,21 @@ if (require.main === module) {
     }
     const query = process.argv[2];
     const result = await answer(query);
-    console.log("Chat GPT says:");
-    result.messages.forEach(console.log);
+    console.log(`Chat GPT says: ${result.messages[0]}`);
     console.log("================");
     console.log("References:");
-    result.searchResult.forEach((row) => {
-      console.log(`Title: ${row.title}`);
-      console.log(`- Conference: ${row.conference}`);
-      console.log(`- Video URL: ${row.videoUrl}`);
-      console.log(`- Transcript: ${row.path}`);
-    });
+    result.searchResult
+      .reduce((acc, row) => {
+        return [
+          ...acc,
+          ...(!!acc.find((a) => a.path === row.path) ? [] : [row]),
+        ];
+      }, [])
+      .forEach((row: any) => {
+        console.log(`Title: ${row.title}`);
+        console.log(`- Conference: ${row.conference}`);
+        console.log(`- Video URL: ${row.videoUrl}`);
+        console.log(`- Transcript: ${row.path}`);
+      });
   })();
 }

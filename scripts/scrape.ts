@@ -23,7 +23,7 @@ const TALK_PATHS = [
   "/AreWeThereYet.md",
   "/PersistentDataStructure.md",
   "/HammockDrivenDev.md",
-  "/RichHickeyQandA.md",
+  // "/RichHickeyQandA.md", // No metadata
   "/SimpleMadeEasy.md",
   "/SimplicityMatters.md",
   "/ValueOfValuesLong.md",
@@ -87,19 +87,28 @@ const getContents = async (path: string) => {
   const html = await axios.get(`${BASE_URL}${path}`);
   const $ = cheerio.load(html.data);
   const article = $("article.markdown-body");
+  const metadata = $(article)
+    .find("ul")
+    .children("li")
+    .map((_, l) => $(l).text())
+    .toArray();
   const texts = $(article)
-    .find('p[dir="auto"]')
+    .find("p")
     .filter((_, p) => {
       const text = $(p).text();
       return !/^\[.+\]$/.test(text) && $(p).find("img").length === 0;
     })
     .map((_, p) => $(p).text())
     .toArray();
+  const conferenceElement = metadata.find((text) =>
+    /^(Conference|Event|Meeting|)\:/.test(text)
+  );
+  const videoUrlElement = metadata.find((text) => /^Video( \d+)*\:/.test(text));
   return <Content>{
     path: path,
     title: $(article).find("h1").text(),
-    conference: $(article).find("ul > li:nth-of-type(2)").text(),
-    videoUrl: $(article).find("ul > li:nth-of-type(3)").text().split(": ")[1],
+    conference: conferenceElement?.split(": ").slice(1).join(""),
+    videoUrl: videoUrlElement?.split(": ").slice(1).join(": "),
     texts: texts,
   };
 };
@@ -156,9 +165,9 @@ const save = async (db: Database, content: Content) => {
 if (require.main === module) {
   (async () => {
     const db = await setupDb();
-    for (const talkPath of TALK_PATHS) {
-      const content = await getContents(talkPath);
-      console.log(content);
+    for (const path of TALK_PATHS) {
+      console.log(`scarape: ${path}`);
+      const content = await getContents(path);
       await save(db, content);
       await setTimeout(2000);
     }
