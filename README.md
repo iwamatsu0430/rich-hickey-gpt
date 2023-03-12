@@ -6,6 +6,7 @@ Chat GPT with [Rich Hickey](https://en.wikipedia.org/wiki/Rich_Hickey)
 
 ## Respect
 
+- Rich Hickey
 - https://github.com/mckaywrigley/paul-graham-gpt
 - https://github.com/matthiasn/talk-transcripts/blob/master/Hickey_Rich/
 
