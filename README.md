@@ -1,5 +1,9 @@
 # Rich Hickey GPT
 
+Chat GPT with [Rich Hickey](https://en.wikipedia.org/wiki/Rich_Hickey)
+
+![Screenshot](./screenshot.png "Screenshot")
+
 ## Respect
 
 - https://github.com/mckaywrigley/paul-graham-gpt
