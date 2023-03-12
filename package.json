@@ -1,0 +1,31 @@
+{
+  "name": "rich-hickey-gpt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "scrape": "tsx scripts/scrape.ts",
+    "embed": "tsx scripts/embed.ts",
+    "search": "tsx scripts/search.ts",
+    "answer": "tsx scripts/answer.ts",
+    "lint": "eslint scripts/* --fix",
+    "prettier": "prettier --write scripts/*"
+  },
+  "author": "iwamatsu0430",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18.15.0",
+    "axios": "^1.3.4",
+    "cheerio": "^1.0.0-rc.12",
+    "eslint": "^8.36.0",
+    "eslint-config-prettier": "^8.7.0",
+    "gpt-3-encoder": "^1.1.4",
+    "prettier": "^2.8.4",
+    "tsx": "^3.12.3"
+  },
+  "dependencies": {
+    "compute-cosine-similarity": "^1.0.0",
+    "sqlite3": "^5.1.4",
+    "openai": "^3.2.1"
+  }
+}
