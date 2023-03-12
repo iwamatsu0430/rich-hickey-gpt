@@ -12,6 +12,14 @@ $ npm install
 $ export OPENAI_API_KEY=YOUR_API_KEY # recommend direnv
 ```
 
+Run
+
+```sh
+$ npm run answer "What is Simple?"
+```
+
+### Optional
+
 Scrape and refresh data.db
 
 ```sh
@@ -22,12 +30,6 @@ Embedding
 
 ```sh
 $ npm run embed
-```
-
-Run
-
-```sh
-$ npm run answer "What is Simple?"
 ```
 
 ## Why don't you use Clojure?

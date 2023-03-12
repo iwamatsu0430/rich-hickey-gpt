@@ -33,7 +33,7 @@ if (require.main === module) {
           (${row.id}, '${String(embedding)}')
         `
       );
-      await setTimeout(2000);
+      await setTimeout(2500);
     }
     db.close();
   })();
